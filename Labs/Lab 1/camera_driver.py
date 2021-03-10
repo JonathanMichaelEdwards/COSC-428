@@ -3,6 +3,8 @@ import numpy as np
 
 cap = cv2.VideoCapture(-1)  # Open the first camera connected to the computer.
 
+
+# Would have limit the brightness between -64/64
 # Callbacks for the trackbar.
 def updateBrightness(brightness):
     cap.set(cv2.CAP_PROP_BRIGHTNESS, brightness/100)
