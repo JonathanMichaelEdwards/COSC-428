@@ -2,7 +2,7 @@
 
 import cv2
 
-cap = cv2.VideoCapture(-1)  # Open the first camera connected to the computer.
+cap = cv2.VideoCapture(0)  # Open the first camera connected to the computer.
 
 while True:
     ret, frame = cap.read()  # Read an image from the frame.
