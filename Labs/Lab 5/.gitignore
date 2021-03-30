@@ -1,0 +1,8 @@
+
+__pycache__/
+labelstudio-env/
+detectron2/
+flownet2-pytorch/
+labelstudio/labelstudio/
+labelstudio/ml_backend/
+labelstudio/image-cache/

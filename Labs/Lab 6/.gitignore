@@ -1,0 +1,14 @@
+*.pyc
+*/__pycache__/
+
+detectron2/
+THOR/
+PyTorch-YOLOv3/
+
+playing_card_detection/dtd-r1.0.1.tar.gz
+playing_card_detection/dtd/
+playing_card_detection/data/custom/
+playing_card_detection/data/backgrounds.pck
+playing_card_detection/data/cards.pck
+playing_card_detection/data/valid.txt
+playing_card_detection/data/train.txt
