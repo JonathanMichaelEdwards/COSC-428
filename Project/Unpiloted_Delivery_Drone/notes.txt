@@ -1,2 +1,0 @@
-Each marker has a seperate ID - i.e. beacon (follow that path) 
-	e.g, ID1 -> ID3 -> ID6 (fly on path)
