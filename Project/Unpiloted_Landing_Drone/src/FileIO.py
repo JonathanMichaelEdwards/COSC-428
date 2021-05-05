@@ -2,9 +2,9 @@ import time, csv
     
 
 
-def write(x_data, y_data, fileName):
+def write_X_Y_Z_YAW(x_data, x, y, z, yaw, fileName):
     """
-        - Writes data to file. 
+        - Writes (x, y, z) data to file. 
     """
     i = 0 
 
@@ -12,30 +12,26 @@ def write(x_data, y_data, fileName):
         write = csv.writer(file, delimiter=',', lineterminator='\n')
         while i < len(x_data):  # Seperate data
             try:
-                write.writerow([x_data[i], y_data[i]])
+                write.writerow([x_data[i], x[i], y[i], z[i], yaw[i]])
             except IndexError:
                 pass
             i += 1
     file.close()
 
 
-def read(file):
+def writeAngle(x_data, yaw_data, cp_data, fileName):
     """
-        - Reads data file.
-        
-        Returns -> buffered (x, y) data from file.
+        - Writes the Angle data to file. 
     """
     i = 0 
-    buff_x = []
-    buff_y = []
 
-    file = open(f"{file}.csv",'r')
-    new_value = file.readlines()
-    while i < len(new_value):  # Seperate data
-        (x_data, y_data) = new_value[i].split(',')
-        buff_x.append(x_data)
-        buff_y.append(y_data.strip())
-        i += 1
+    with open(f"{fileName}.csv",'w') as file:
+        write = csv.writer(file, delimiter=',', lineterminator='\n')
+        while i < len(x_data):  # Seperate data
+            try:
+                write.writerow([x_data[i], yaw_data[i], cp_data[i]])
+            except IndexError:
+                pass
+            i += 1
     file.close()
-    
-    return (buff_x, buff_y)
+
