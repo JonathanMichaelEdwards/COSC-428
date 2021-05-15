@@ -4,8 +4,8 @@ import cv2
 import numpy as np
 
 # cap = cv2.VideoCapture('d.jpg')  # Open the first camera connected to the computer.
-cap = cv2.VideoCapture(0) 
-
+# cap = cv2.VideoCapture("HeliPad - original.jpg") 
+cap = cv2.VideoCapture(0)
 while True:
     ret, frame = cap.read()
     # The Harris corner detector operates on a grayscale image.
