@@ -1,0 +1,54 @@
+Safe take off method recommended
+Timeout in seconds
+Waits untill drone is hovering, otherwise timesout
+
+                  mambo.safe_takeoff(timeout)
+
+--------------------------------------------------------------------------------------------
+Safe land method
+Timeout in seconds
+                  mambo.safe_land(timeout)
+
+--------------------------------------------------------------------------------------------
+Hover
+                  hover()
+     OR                  
+                  mambo.set_flat_trim()
+
+--------------------------------------------------------------------------------------------
+Fly Forwards
+Roll, Pitch, Yaw, Vertical Movement -- -100 to 100 % of max speeds/tilts
+Duration is x seconds long
+                  mambo.fly_direct(roll=0, pitch=50, yaw=0, vertical_movement=0, duration=1)
+
+--------------------------------------------------------------------------------------------
+Rotate - More accurate than using fly command
+-180 to 180 degrees
+                  mambo.turn_degrees(90)
+
+--------------------------------------------------------------------------------------------
+Flying Side-ways
+The larger the value, the faster it travels
+                  mambo.set_max_tilt(degrees)
+
+--------------------------------------------------------------------------------------------
+Flying up or down
+Measured in m/s
+                  mambo.set_max_vertical_speed(speed)
+
+--------------------------------------------------------------------------------------------
+Pausing/sleeping in the code
+Any floating point value
+                  smart_sleep(seconds)
+
+--------------------------------------------------------------------------------------------
+Checking Sensors - initialisation
+Only needs to be called once at startup to set some values
+                  ask_for_state_update() 
+
+--------------------------------------------------------------------------------------------
+Checking Sensors
+Sets which sensor data is retrieved on every update
+:param function: name of the user callback function
+:param args: arguments (tuple) to the function
+                  minidrone.set_user_sensor_callback(function, args).
