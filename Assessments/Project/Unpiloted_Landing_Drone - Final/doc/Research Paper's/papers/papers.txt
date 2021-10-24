@@ -1,0 +1,3 @@
+Fractal Markers = https://docs.google.com/document/d/1SdsOTjGdu5o8gy2Ot2FDqYDS9ALgyhOBJcJHOZBR7B4/mobilebasic 
+GEOREFERENCE = http://wildfirewatch.elo.utfsm.cl/georeference/
+Thresholding = https://docs.opencv.org/master/d5/dae/tutorial_aruco_detection.html

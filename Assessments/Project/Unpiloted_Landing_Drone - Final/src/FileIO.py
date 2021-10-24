@@ -1,4 +1,4 @@
-import csv
+import time, csv
     
 
 
@@ -16,7 +16,6 @@ def write_X_Y_Z_YAW(x_data, x, y, z, yaw, fileName):
             except IndexError:
                 pass
             i += 1
-
     file.close()
 
 
@@ -34,6 +33,5 @@ def writeAngle(x_data, yaw_data, cp_data, fileName):
             except IndexError:
                 pass
             i += 1
-
     file.close()
 

@@ -1,7 +1,5 @@
 #!python3.8
 
-# python3.8 src/main.py
-
 from djitellopy import Tello
 from threading import Thread
 from simple_pid import PID
@@ -29,7 +27,7 @@ S = 60
 # A low number also results in input lag, as input information is processed once per frame.
 FPS = 120
 
-# Drone camera matrix(s) - Calibrate data
+# Drone camera matrix(s)
 _CAMERA_MATRIX = cameraLoad.getCameraMat()
 _DISTORTION_COEFF = cameraLoad.getDistortionMat()
 
@@ -48,8 +46,8 @@ dictionary = aruco.getPredefinedDictionary(aruco.DICT_6X6_250)  # Retrieve one o
 
 # Angle Constants
 YAW_THETA_SPEED   = 18  # [deg]
-YAW_THETA_LIM     = 10     # [deg]
-POS_THETA_LIM     = 5     # [deg]
+YAW_THETA_LIM   = 10     # [deg]
+POS_THETA_LIM   = 5     # [deg]
 
 
 
@@ -66,7 +64,7 @@ def detectFiducialMarker(frame):
         Algorithm for detecting a Fiducial marker.
     """
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    corners, ids, _ = aruco.detectMarkers(gray, dictionary)  # Attempt to detect markers in the frame.
+    corners, ids, rejected = aruco.detectMarkers(gray, dictionary)  # Attempt to detect markers in the frame.
     if ids is not None:  # We have detected some markers.
         # Estimate the pose of the detected markers (assumes marker is 7cm wide).
         poses = aruco.estimatePoseSingleMarkers(corners, 0.035, CAMERA_MATRIX, DISTORTION_COEFF)  # Marker Area defined
@@ -82,11 +80,11 @@ def detectFiducialMarker(frame):
             # Draw a 3D axis for each marker position.
             if (ids[i] == 23): #31=centre
                 frame = aruco.drawAxis(frame, CAMERA_MATRIX, DISTORTION_COEFF, rvec[i], tvec[i], 0.035)
-                return ((round(x, 2), round(y, 2), round(z, 2)), round(rz, 2))
+                return (ids[i], (round(x, 2), round(y, 2), round(z, 2)), round(rz, 2))
 
         
 
-def avgFMCoord(storeVal):
+def avgFMCoord(storeIndex, storeVal):
     avgRY = sum(storeVal) / 10
     storeVal.clear()
 
@@ -123,7 +121,7 @@ def yawControl(pidYaw, avgRZ, controlYaw):
     return (controlYaw, _land_count)
 
 
-def posControl(tello, pidPos, coords, land_count, send_rc_land):
+def posControl(rc_control, tello, pidPos, coords, land_count, send_rc_land):
     """
     * Centring the drone to view - degree 0.
 
@@ -147,11 +145,15 @@ def posControl(tello, pidPos, coords, land_count, send_rc_land):
     x = int(coords[0]*100)  # m -> cm
     y = int(coords[1]*100)  # m -> cm
     z = 0
+    _centred = 0
+
+    y_view = -1
+    x_view = -1
 
     _land_count = land_count
     
     #   note:
-    #     - remember sign change (negative feedback)  
+    #     - remember sign change   
     # left & right control - Horizontal
     if ((x < POS_THETA_LIM) and (x > -POS_THETA_LIM)):   # View centred - do nothing
         x = 0
@@ -178,6 +180,7 @@ def posControl(tello, pidPos, coords, land_count, send_rc_land):
     if (_land_count == 3): # Land
         if (z < 15 and z > 10):
             tello.land()
+            send_rc_land = True
             return (0, 0, 0)
         z = -((coords[2]*100)/3)-10
 
@@ -219,12 +222,15 @@ class FrontEnd(object):
         self.send_rc_land = False
 
         # init PID - yaw  
+        # self.pidYaw = PID(2, 0.2, 1.2, setpoint=0)  # Desired alpha angle = 0deg
         self.pidYaw = PID(1.5, 0.01, 0.3, setpoint=0)  # Desired alpha angle = 0deg
         self.pidYaw.sample_time = 0.1  # Update every 0.1 seconds
         self.controlYaw = 0
 
         # init PID - pos  
-        self.pidPos = PID(0.6, 0.01, 0.06, setpoint=0)  # Desired centre point angle = 0deg
+        # self.pidPos = PID(2, 0.1, 0.5, setpoint=0)  # Desired centre point angle = 0deg
+        self.pidPos = PID(0.6, 0.01, 0.06, setpoint=0)
+        # self.pidPos = PID(1, 0, 0, setpoint=0)
         self.pidPos.sample_time = 0.1  # Update every 0.1 seconds
 
         self.storeIndex = 0
@@ -301,8 +307,8 @@ class FrontEnd(object):
             try:
                 txtBat = "Battery: {}%".format(self.tello.get_battery().strip())
 
-                (self.coords, rz) = detectFiducialMarker(frame)
-         
+                (ids, self.coords, rz) = detectFiducialMarker(frame)
+        
                 # Find the angle of the Markers centre point to the centre of the screen 
                 self.alpha = round(np.degrees((np.arctan((self.coords[0]/self.coords[2])))), 2)  
                 
@@ -310,8 +316,8 @@ class FrontEnd(object):
                 self.storeCP.append(self.alpha)
 
                 if (self.storeIndex >= 10):
-                    self.avgRZ = avgFMCoord(self.storeRZ)
-                    self.avgCP = avgFMCoord(self.storeCP)
+                    self.avgRZ = avgFMCoord(self.storeIndex, self.storeRZ)
+                    self.avgCP = avgFMCoord(self.storeIndex, self.storeCP)
                     self.storeIndex = 0
                 else:
                     self.storeIndex += 1
@@ -346,13 +352,12 @@ class FrontEnd(object):
 
             # Control based on ID position
             (self.controlYaw, land_count) = yawControl(self.pidYaw, self.avgRZ, self.controlYaw)    # yaw control  
-            _coords = posControl(self.tello, self.pidPos, self.coords, land_count, self.send_rc_land)    # pos control    
+            _coords = posControl(self.send_rc_control, self.tello, self.pidPos, self.coords, land_count, self.send_rc_land)    # pos control    
             self.tello.send_rc_control(_coords[0], _coords[1], _coords[2], self.controlYaw)  
             
             # Storing 'centring' & 'yaw' data in files
             tStep = round((time.time()-self.t0), 2)
 
-            # 
             self.t_stamp = np.append(self.t_stamp, tStep)
             self.x_buff = np.append(self.x_buff, _coords[0])
             self.y_buff = np.append(self.y_buff, _coords[1])
@@ -361,7 +366,7 @@ class FrontEnd(object):
             self.y_pos_data = np.append(self.y_pos_data, round(self.avgCP, 2))
             self.y_yaw_data = np.append(self.y_yaw_data, round(self.avgRZ, 2))
 
-            # Writing data to files
+            # Writing to files
             FileIO.write_X_Y_Z_YAW(self.t_stamp, self.x_buff, self.y_buff, self.z_buff, self.yaw_speed, "src/data/xyz_plotting_data")
             FileIO.writeAngle(self.t_stamp, self.y_yaw_data, self.y_pos_data, "src/data/angle_plotting_data")
 
@@ -382,6 +387,7 @@ class FrontEnd(object):
         cv2.destroyAllWindows()
 
         # Dealocating Resources
+        keepRecording = False
         self.tello.end()
         video.release()
         sys.exit(0)
